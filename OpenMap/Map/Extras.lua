@@ -299,28 +299,23 @@ end
 --------------------------------------------------------------------------------
 
 local SHOW_CURRENT = 0                  -- HBD_PINS_WORLDMAP_SHOW_CURRENT: only on its own map
-local QUESTIE_BASE = 2015               -- the fixed frame level Questie's map icons and lines start from
+local lifted_warned = false
 
--- Questie fixes its icons' frame levels from QUESTIE_BASE up (it expects Blizzard's map canvas
--- near 2000), which is under the stitched map's upper art layers: lift them above the art,
--- keeping their order among themselves (quest finishers in front ...)
-local function Lift(icon)
+-- Questie fixes its icons' frame levels from `base` up (it expects Blizzard's map canvas near 2000),
+-- which is under the stitched map's upper art layers: lift them above the art, keeping their order
+-- among themselves (quest finishers in front ...)
+local function Lift(icon, base)
 	local top = S.artTop
-	if not top or not icon.GetFrameLevel or not icon.SetFixedFrameLevel then return end
+	if not top or not base or not icon.GetFrameLevel or not icon.SetFixedFrameLevel then return end
 	local level = icon:GetFrameLevel()
 	if level > top then return end
-	icon:SetFixedFrameLevel(false)
-	icon:SetFrameLevel(level - QUESTIE_BASE + top + 1)
-	icon:SetFixedFrameLevel(true)
-end
-
--- icons placed before the art was built (the map's first opening) keep Questie's own levels:
--- lift every one already on the map
-function mod.LiftQuestiePins()
-	if not map or not mod.IsStitched() or not S.artTop then return end
-	for pin in map:EnumeratePinsByTemplate("HereBeDragonsPinsTemplateQuestie") do
-		if pin.icon then Lift(pin.icon) end
+	if (level < base or level > base + 100) and not lifted_warned then
+		lifted_warned = true
+		ns:Print("World map: a Questie icon came at frame level %d, outside the %d+ Questie used to use; its icons may sit behind the map. Tell OpenMap's author.", level, base)
 	end
+	icon:SetFixedFrameLevel(false)
+	icon:SetFrameLevel(math.max(level - base, 0) + top + 1)
+	icon:SetFixedFrameLevel(true)
 end
 
 -- Questie's icons arrive in a trickle (its draw queue) and some before the map is stitched: a lift
@@ -348,9 +343,19 @@ local questie = { placed = 0, ours = 0, moved = 0 }   -- for /openmap status: si
 -- belongs on the stitched map, a neighbouring zone's too. Questie's copy has its own pin template and
 -- frame levels; the others use HereBeDragons' own template.
 local PIN_LIBS = {
-	["HereBeDragonsQuestie-Pins-2.0"] = { template = "HereBeDragonsPinsTemplateQuestie", questie = true },
+	["HereBeDragonsQuestie-Pins-2.0"] = { template = "HereBeDragonsPinsTemplateQuestie", questie = true, liftBase = 2015 },
 }
 local DEFAULT_TEMPLATE = "HereBeDragonsPinsTemplate"
+
+-- icons placed before the art was built (the map's first opening) keep Questie's own levels:
+-- lift every one already on the map
+function mod.LiftQuestiePins()
+	if not map or not mod.IsStitched() or not S.artTop then return end
+	local base = PIN_LIBS["HereBeDragonsQuestie-Pins-2.0"].liftBase
+	for pin in map:EnumeratePinsByTemplate("HereBeDragonsPinsTemplateQuestie") do
+		if pin.icon then Lift(pin.icon, base) end
+	end
+end
 
 local function SetUpPins(name, pins)
 	local spec = PIN_LIBS[name] or { template = DEFAULT_TEMPLATE }
@@ -378,7 +383,7 @@ local function SetUpPins(name, pins)
 		local holder = icon:GetParent()
 		local placed = holder and holder.icon == icon and holder.SetPosition and holder
 		if placed then count.placed = count.placed + 1 end
-		if placed and spec.questie and mod.IsStitched() then Lift(icon) end
+		if placed and spec.questie and mod.IsStitched() then Lift(icon, spec.liftBase) end
 		if not mod.IsStitched() then return end
 		local uiMapID, mx, my = data.uiMapID, data.mapX, data.mapY
 		if not (mx and my) and at[icon] and at[icon][1] == uiMapID then uiMapID, mx, my = at[icon][1], at[icon][2], at[icon][3] end
@@ -401,7 +406,7 @@ local function SetUpPins(name, pins)
 		if profile and profile.hideIconsOnContinents and info.mapType == Enum.UIMapType.Continent then return end
 		if x < -NEAR or x > 1 + NEAR or y < -NEAR or y > 1 + NEAR then return end
 		self:GetMap():AcquirePin(spec.template, icon, x, y, data.frameLevelType)
-		if spec.questie then Lift(icon) end
+		if spec.questie then Lift(icon, spec.liftBase) end
 		count.ours = count.ours + 1
 	end
 	-- (counted afresh each time the map changes: HereBeDragons rebuilds its pins then)

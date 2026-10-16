@@ -726,6 +726,8 @@ local function Setup()
 		or not fl:InsertFrameLevelAbove("PIN_FRAME_LEVEL_OPENMAP_ICONS", "PIN_FRAME_LEVEL_MAP_HIGHLIGHT", 6) then
 		ns:Print("World map: Blizzard's map layers aren't the expected ones; the stitched art may cover some map icons.")
 	end
+	
+	S.artTop = fl:GetValidFrameLevel("PIN_FRAME_LEVEL_OPENMAP_STITCH") + ART_RANGE
 
 	S.OnPinMouseDown, S.OnPinMouseUp = OnPinMouseDown, OnPinMouseUp
 	S.GlideToWorld = function(u, v, zoom) GlideTo(u, v, math.max(zoom or 1, select(3, View()))) end
