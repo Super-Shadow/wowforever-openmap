@@ -313,6 +313,31 @@ local function Lift(icon)
 	icon:SetFrameLevel(level - QUESTIE_BASE + top + 1)
 	icon:SetFixedFrameLevel(true)
 end
+
+-- icons placed before the art was built (the map's first opening) keep Questie's own levels:
+-- lift every one already on the map
+function mod.LiftQuestiePins()
+	if not map or not mod.IsStitched() or not S.artTop then return end
+	for pin in map:EnumeratePinsByTemplate("HereBeDragonsPinsTemplateQuestie") do
+		if pin.icon then Lift(pin.icon) end
+	end
+end
+
+-- Questie's icons arrive in a trickle (its draw queue) and some before the map is stitched: a lift
+-- pass is scheduled whenever one is added or the map shows, and runs once the map is ready
+local liftFrame, liftWait = CreateFrame("Frame"), 0
+liftFrame:Hide()
+liftFrame:SetScript("OnUpdate", function(self, elapsed)
+	liftWait = liftWait + elapsed
+	if liftWait < 0.25 then return end
+	liftWait = 0
+	if not map:IsShown() then self:Hide() return end   -- (the next showing schedules another)
+	if not mod.IsStitched() or not S.artTop then return end   -- (not ready: try again)
+	self:Hide()
+	mod.LiftQuestiePins()
+end)
+function mod.MarkLift() liftFrame:Show() end
+
 local NEAR = 0.5                        -- how far round the map underneath (its widths) pins are placed (each pin
                                         --  on the map is laid out again on every frame of a pan or zoom: /openmap bench)
 
@@ -343,6 +368,7 @@ local function SetUpPins(name, pins)
 	if type(add) == "function" then
 		pins.AddWorldMapIconMap = function(lib, ref, icon, uiMapID, x, y, ...)
 			if icon and type(uiMapID) == "number" and type(x) == "number" and type(y) == "number" then at[icon] = { uiMapID, x, y } end
+			if spec.questie then mod.MarkLift() end
 			return add(lib, ref, icon, uiMapID, x, y, ...)
 		end
 	end

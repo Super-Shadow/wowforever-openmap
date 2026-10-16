@@ -493,6 +493,7 @@ local function Attach(mapID)
 		if mod.IsSketching and mod:IsSketching() then mod:ToggleSketch(false) end
 	end
 	if mod.OnStitchedChanged then mod.OnStitchedChanged(active) end
+	if active and mod.MarkLift then mod.MarkLift() end
 end
 
 -- zoom levels from the whole world to street level, in this map's scale
