@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Questie’s icons no longer sit behind the map the first time it opens after a reload.
+
 ### New
 
 - **A choice the first time the map opens** on a new install: **Classic** (unexplored areas

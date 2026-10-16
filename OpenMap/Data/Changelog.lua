@@ -4,7 +4,8 @@
 local _, ns = ...
 
 ns.MapChangelog = {
-	{ version = "Unreleased", date = "", heads = { [1] = "New", [6] = "Fixed", }, items = {
+	{ version = "Unreleased", date = "", heads = { [2] = "New", [7] = "Fixed", }, items = {
+		"Questie’s icons no longer sit behind the map the first time it opens after a reload.",
 		"|cff6e2c0aA choice the first time the map opens|r on a new install: |cff6e2c0aClassic|r (unexplored areas hidden, no dungeon or flight master icons, no zone levels, the favourite buttons folded away) or |cff6e2c0aOpenMap|r (as it comes). Settings you already have aren't asked about or changed; /openmap welcome asks again. Suggested in #24.",
 		"|cff6e2c0aOpenMap button on the map|r (the menu's Look tab) hides the OpenMap button and the favourites; /openmap opens the menu then.",
 		"|cff6e2c0aYour arrow on top|r: the player arrow is drawn over every other icon on the map (quest givers, Questie's and other addons' icons), so you can always see which way you're facing (suggested in #31). Your party's markers come up with it.",
